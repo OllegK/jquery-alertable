@@ -49,12 +49,29 @@ if(jQuery) (function($) {
 
     // Add buttons
     $(modal).find('.alertable-buttons')
-    .append(type === 'alert' ? '' : cancelButton)
-    .append(okButton);
+    //.append(type === 'alert' ? '' : cancelButton)
+    //.append(okButton);
+		//handling optional buttons for prompt mode
+		.append(type === 'alert' ? '' : type === 'prompt' && options.promptOptions.displayCancelButton ? cancelButton : '')
+		.append(type === 'prompt' && !options.promptOptions.displayOKButton ? '' : okButton);
 
     // Add to container
     $(options.container).append(overlay).append(modal);
 
+	//set top and left
+	if (options.top > 0) {
+		$(modal).css({"top" : options.top});
+	}
+	if (options.left > 0) {
+		$(modal).css({"left" : options.left});
+	}
+			
+	//hide the overlay on click
+	overlay.on('click.alertable', function () {
+		hide(options);
+		defer.reject();
+	});	
+	
     // Show it
     options.show.call({
       modal: modal,
@@ -101,6 +118,7 @@ if(jQuery) (function($) {
     $(document).on('keydown.alertable', function(event) {
       if(event.keyCode === 27) {
         event.preventDefault();
+		event.stopImmediatePropagation(); //prevent UndoRecord in Siebel OpenUI
         hide(options);
         defer.reject();
       }
@@ -147,7 +165,7 @@ if(jQuery) (function($) {
     },
 
     // Show a prompt
-    prompt: function(message, options) {
+    prompt: function(message, options, val) { //added the third input parameter - val
       return show('prompt', message, options);
     },
 
@@ -155,6 +173,14 @@ if(jQuery) (function($) {
       // Preferences
       container: 'body',
       html: false,
+	  //added the top and left options, also promptOptions
+	  top: 0, 
+	  left: 0,
+	  promptOptions: {
+		displayCancelButton: false,
+		displayOKButton: false,
+		initialValue: '' //initial value to be displayed in prompt
+	  },	  
 
       // Templates
       cancelButton: '<button class="alertable-cancel" type="button">Cancel</button>',
